@@ -2,7 +2,7 @@
 Title = "RDAP Simple Redaction"
 area = "Applications and Real-Time Area (ART)"
 workgroup = "Registration Protocols Extensions (regext)"
-abbrev = "rdap-x"
+abbrev = "simple-redaction"
 updates = [7480]
 ipr= "trust200902"
 
