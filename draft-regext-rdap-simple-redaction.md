@@ -118,6 +118,13 @@ The following is an example of a "tel" URI used in a jCard array:
 ["tel", {}, "uri", "tel:+////0000000////;ext=////999999////"]    
 ```
 
+The above is just an example, but [@?RFC6530], which defines the much of the structures in [@?RFC7095], does
+not require the "tel" property to be a URI. So this maybe written as:
+
+```
+["tel", {}, "text", "////TELEPHONE_REDACTION////"]    
+```
+
 ## Email Addresses
 
 Keys for email addresses MUST use a host part that is "redacted.invalid" but may use any local part
@@ -136,7 +143,9 @@ The ".invalid" TLD is a special-use domain defined in [@!RFC6761] and is unuseab
 
 Each defined key MUST be given in the "simpleRedaction" array value. This array contains JSON objects.
 Each JSON object has a REQUIRED JSON string name "key", a JSON array named "reasons", and an OPTIONAL
-"links" array as defined by [@!RFC9083]. The "reasons" array is OPTIONAL but if present MUST NOT be empty.
+"links" array as defined by [@!RFC9083], which may be used to provide links to additional information
+regarding the redaction such as a webpage describing the policy regarding the redaction.
+The "reasons" array is OPTIONAL but if present MUST NOT be empty.
 
 The "reasons" array contains JSON objects. These objects SHOULD have a "lang" member as defined
 by [@!RFC9083] and MUST have a JSON array named "description". The "description" array contains
