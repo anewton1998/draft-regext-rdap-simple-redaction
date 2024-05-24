@@ -67,7 +67,7 @@ The following is an example of an RDAP response using simple redaction:
     [
       ["version", {}, "text", "4.0"],
       ["fn", {}, "text", "////REDACTED_FN////"],
-        ["email",
+      ["email",
         { "type":"work" },
         "text", "redacted_email@redacted.invalid"
       ]
@@ -82,7 +82,7 @@ The following is an example of an RDAP response using simple redaction:
 
 ```
 
-# Redaction Keys
+# Redaction Keys {#redaction_keys}
 
 Simple redaction allows a server to define a set of keys, each used to signify when data in a string
 has been redacted.
@@ -139,12 +139,15 @@ For example: `https://redacted.invalid/redacted_web_page`.
 
 The ".invalid" TLD is a special-use domain defined in [@!RFC6761] and is unuseable on the Internet.
 
-# Explicit Keying
+# Explicit Keying {#explicity_keying}
+
+All redaction keys ((#redaction_keys)) are explicitly specified by the server.
+
+## The "simpleRedaction" Array {#simple_redaction_array}
 
 Each defined key MUST be given in the "simpleRedaction" array value. This array contains JSON objects.
-Each JSON object has a REQUIRED JSON string name "key", a JSON array named "reasons", and an OPTIONAL
-"links" array as defined by [@!RFC9083], which may be used to provide links to additional information
-regarding the redaction such as a webpage describing the policy regarding the redaction.
+Each JSON object has a REQUIRED JSON string named "key", a JSON array named "reasons", and an OPTIONAL
+"links" array as defined by [@!RFC9083] (see (#alternates) and (#policy) on usage).
 The "reasons" array is OPTIONAL but if present MUST NOT be empty.
 
 The "reasons" array contains JSON objects. These objects SHOULD have a "lang" member as defined
@@ -191,9 +194,125 @@ redaction (i.e. do not signal to the user that the information has been redacted
 
 The "simpleRedaction" JSON value MUST only be in the top-most object of the RDAP response.
 
-# Keying Strategies
+## Alternates {#alternates}
 
-## Unclean Data
+The "simpleRedaction" array described in (#simple_redaction_array) allows each key to be accompanied by
+an array of links, as defined by [#RFC9083]. Usage of the links may be used to single an alternate
+usage in cases where the alternate can be expressed as a URI. To do this, servers MUST use the "alternate"
+link relation and clients SHOULD signal to users that the "href" value is available for alternate usage.
+
+The following example demonstrates the singaling on a web-based contact form to be used instead of email.
+
+```
+{
+  "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
+  "objectClassName" : "entity",
+  "handle":"foo",
+  "vcardArray":[
+    "vcard",
+    [
+      ["version", {}, "text", "4.0"],
+      ["fn", {}, "text", "Bob Allison"],
+      ["email",
+        { "type":"work" },
+        "text", "redacted_email@redacted.invalid"
+      ]
+    ]
+  ],
+  “simpleRedaction”: [
+    { 
+      “key”: “redacted_email@redacted.invalid”,
+      "links": [
+        {
+          "value": "https://example.com/value",
+          "rel": "alternate",
+          "href": "https://example.com/form",
+          "type": "text/html"
+        }
+      ]
+    }
+  ]
+}
+```
+
+This example demonstrates singaling that an alternate email address is to be used.
+
+```
+{
+  "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
+  "objectClassName" : "entity",
+  "handle":"foo",
+  "vcardArray":[
+    "vcard",
+    [
+      ["version", {}, "text", "4.0"],
+      ["fn", {}, "text", "Bob Allison"],
+      ["email",
+        { "type":"work" },
+        "text", "redacted_email@redacted.invalid"
+      ]
+    ]
+  ],
+  “simpleRedaction”: [
+    { 
+      “key”: “redacted_email@redacted.invalid”,
+      "links": [
+        {
+          "value": "https://example.com/value",
+          "rel": "alternate",
+          "href": "mailto:proxy-service@example.com"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Clients should consider, when presenting information to a user,
+that an alternate use may differ from the form in the RDAP response. For example,
+the RDAP response may contain an email address but the alternate usage is a web page.
+
+## Redaction Policy {#policy}
+
+The "links" array described in (#simple_redaction_array) may also be used to link to a web page
+describing the redaction policy. When the array is to be used for this purpose, the "about" relationship
+MUST be used. The following is an example.
+
+```
+{
+  "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
+  "objectClassName" : "entity",
+  "handle":"foo",
+  "vcardArray":[
+    "vcard",
+    [
+      ["version", {}, "text", "4.0"],
+      ["fn", {}, "text", "Bob Allison"],
+      ["email",
+        { "type":"work" },
+        "text", "redacted_email@redacted.invalid"
+      ]
+    ]
+  ],
+  “simpleRedaction”: [
+    { 
+      “key”: “redacted_email@redacted.invalid”,
+      "links": [
+        {
+          "value": "https://example.com/value",
+          "rel": "about",
+          "href": "mailto:proxy-service@example.com",
+          "type": "text/html"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Keying Strategies
+
+### Unclean Data
 
 While it seems odd that some users would be allowed to give an email address with a host of
 "redacted.invalid" or a string that begins and ends with four forward-slashes to an Internet
@@ -203,7 +322,7 @@ One strategy servers may use would be to append a set of random digits to each k
 if a registered resource was given as "////I_FOOLED_YOU////" then the server could thwart this
 by appending the random digits "90210" to make the key "////I_FOOLED_YOU90210////".
 
-## Handles
+### Handles
 
 For servers operating under policies in which the "handle", as defined by [@!RFC9083] must be
 redacted, it would be beneficial to some clients to create unique redaction keys for each handle.
@@ -211,7 +330,83 @@ While clients SHOULD use "self" links, as described in [@!RFC9083], to different
 between objects returned in a response, in the absence they may also use the "handle".
 Therefore, servers SHOULD create a unique redaction key for each handle that is redacted.
 
-# An Example
+# Examples
+
+## Unstructured Addresses
+
+[@?RFC7095] allows for the representation of unstructured postal addresses. The following is a simple
+example of an RDAP response with simple redactions where the postal address is given as
+unstructured.
+
+```
+{
+  "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
+  "objectClassName" : "entity",
+  "handle":"foo",
+  "vcardArray":[
+    "vcard",
+    [
+      ["version", {}, "text", "4.0"],
+      ["fn", {}, "text", "Bob"],
+      ["adr",
+        {
+
+          "type":"home",
+          "label":"////REDACTED_STREET////\nVancouver\nBC\n////REDACTED_POSTAL_CODE////\n"
+        },
+        "text",
+        [
+          "", "", "", "", "", "", ""
+        ]
+      ],
+    ]
+  ],
+  “simpleRedaction”: [
+    { “key”: “////REDACTED_STREET////” },
+    { “key”: “////REDACTED_POSTAL_CODE////” },
+  ]
+}
+````
+
+## Structured Addresses
+
+[@?RFC7095] allows for the representation of structured postal addresses. The following is a simple
+example of an RDAP response with simple redactions where the postal address is given as
+structured.
+
+```
+{
+  "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
+  "objectClassName" : "entity",
+  "handle":"foo",
+  "vcardArray":[
+    "vcard",
+    [
+      ["version", {}, "text", "4.0"],
+      ["fn", {}, "text", "Bob"],
+      ["adr",
+        { "type":"work" },
+        "text",
+        [
+          "",
+          "////REDACTED_STREET////",
+          "////REDACTED_STREET////",
+          "Quebec",
+          "QC",
+          "////REDACTED_POSTAL_CODE////",
+          "Canada"
+        ]
+      ]
+    ]
+  ],
+  “simpleRedaction”: [
+    { “key”: “////REDACTED_STREET////” },
+    { “key”: “////REDACTED_POSTAL_CODE////” },
+  ]
+}
+````
+
+## A Complete Example
 
 The following is an example an RDAP response to a domain lookup in which the redactions
 specified in 
