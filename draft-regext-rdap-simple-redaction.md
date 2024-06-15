@@ -11,7 +11,7 @@ name = "Internet-Draft"
 value = "draft-newton-regext-rdap-simple-redaction-00"
 stream = "IETF"
 status = "standard"
-date = 2024-05-20T00:00:00Z
+date = 2024-06-17T00:00:00Z
 
 [[author]]
 initials="A."
@@ -32,27 +32,21 @@ This document defines a simple redaction extension for the Registration Data Acc
 
 # Background
 
-[@?RFC9537] defines a redaction extension for the Registration Data Access Protocol (RDAP),
-which is a complex mechanism that has been shown to be difficult to implement.
-
-This document defines a simpler redaction extension, "simple redaction", that is achieved through a narrower scope
+This document defines a simple redaction extension, "simple redaction", that is achieved through a narrow scope
 of features. Simple redaction only defines redaction in JSON strings of RDAP responses. This narrowed
 scope meets the purposes of known redaction policies, such as the 
 [ICANN Registration Data Policy](https://www.icann.org/resources/pages/registration-data-policy-2024-02-21-en),
 where redaction is applied against "personal data" which is only found in JSON strings in the
 RDAP specification ([@!RFC9083]). The only place in RDAP where booleans or integers are used in the
-base specification [@!RFC9083] are in the DNSSEC portion of the domain object class, and there 
-is unlikely to be policy for redaction such information as it also visible in the public DNS.
+base specification of [@!RFC9083] are in the DNSSEC portion of the domain object class, and there 
+is unlikely to be policy for redaction of such information as it also visible in the public DNS.
 
 This specification does not require the removal of JSON values or components that
 would otherwise make the resulting JSON invalid according to [@!RFC9083] nor semantically invalid according
 to [@!RFC9083] or [@!RFC7095].
 
-This specification allows for parts of a string to be redacted, which cannot be
-done with [@?RFC9537].
-
 Finally, this specification has the benefit that if an RDAP client does not recognize this extension
-and simply passes the data onto the user, in many contexts the user may still understand that the
+and simply passes the redaction signals onto the user, in some contexts the user may still understand that the
 information is redacted.
 
 The following is an example of an RDAP response using simple redaction:
@@ -85,7 +79,7 @@ The following is an example of an RDAP response using simple redaction:
 # Redaction Keys {#redaction_keys}
 
 Simple redaction allows a server to define a set of keys, each used to signify when data in a string
-has been redacted.
+has been redacted. Clients use these keys to identify the information being redacted.
 
 ## Unstructured Text {#unstructured_keys}
 
@@ -102,7 +96,7 @@ The following example demonstrates redaction of the full name value from a jCard
 These keys may be placed in a string with other characters thus allowing for the partial redaction of a string:
 
 ```
-"Bob ////LAST_NAME_REDACTION////"
+"Alice ////LAST_NAME_REDACTION////"
 ```
 
 ## TEL URIs {#tel_uri_keys}
@@ -134,7 +128,7 @@ The ".invalid" TLD is a special-use domain defined in [@!RFC6761] and is unuseab
 
 ## URIs with Host Names
 
-Keys used in a URI, such as an HTTP URI, MUST use a host name that is "redacted.invalid".
+Keys used in a URI with host names, such as an HTTP URI, MUST use a host name that is "redacted.invalid".
 For example: `https://redacted.invalid/redacted_web_page`.
 
 The ".invalid" TLD is a special-use domain defined in [@!RFC6761] and is unuseable on the Internet.
@@ -180,7 +174,7 @@ The following is an example:
       {
         "value": "https://example.com/value",
         "rel": "about",
-        "href": "https://example.com/href",
+        "href": "https://example.com/some-policy.html",
         "type": "text/html"
       }
     ]
@@ -197,7 +191,7 @@ The "simpleRedaction" JSON value MUST only be in the top-most object of the RDAP
 ## Alternates {#alternates}
 
 The "simpleRedaction" array described in (#simple_redaction_array) allows each key to be accompanied by
-an array of links, as defined by [#RFC9083]. Usage of the links may be used to single an alternate
+an array of links, as defined by [#RFC9083]. Usage of the links may be used to signal an alternate
 usage in cases where the alternate can be expressed as a URI. To do this, servers MUST use the "alternate"
 link relation and clients SHOULD signal to users that the "href" value is available for alternate usage.
 
@@ -226,7 +220,7 @@ The following example demonstrates the singaling on a web-based contact form to 
         {
           "value": "https://example.com/value",
           "rel": "alternate",
-          "href": "https://example.com/form",
+          "href": "https://example.com/contact-form",
           "type": "text/html"
         }
       ]
@@ -301,7 +295,7 @@ MUST be used. The following is an example.
         {
           "value": "https://example.com/value",
           "rel": "about",
-          "href": "mailto:proxy-service@example.com",
+          "href": "https://example.com/some-policy.html",
           "type": "text/html"
         }
       ]
@@ -327,7 +321,7 @@ by appending the random digits "90210" to make the key "////I_FOOLED_YOU90210///
 For servers operating under policies in which the "handle", as defined by [@!RFC9083] must be
 redacted, it would be beneficial to some clients to create unique redaction keys for each handle.
 While clients SHOULD use "self" links, as described in [@!RFC9083], to differentiate between
-between objects returned in a response, in the absence they may also use the "handle".
+between objects returned in a response, in the absence of "self" links they often use the "handle".
 Therefore, servers SHOULD create a unique redaction key for each handle that is redacted.
 
 # Examples
