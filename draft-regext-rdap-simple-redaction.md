@@ -38,6 +38,7 @@ redaction of information than RFC 9537. Additionally, it has several advantages 
 * The reasons for a redaction may be specified in multiple languages.
 * All redactions may be processed by a client programmatically.
 * It re-uses remarks and notices from [@!RFC9083] and is backward-compatible with clients that do no support this extension.
+* Re-use of remarks and notices enables linking of redacted data to redaction policies.
 * In most cases, notifications of redacted data is passed to the user with clients that do not support this extensions.
 * Clients are not required to evaluate complicated and error-prone JSONPath expressions.
 
@@ -179,6 +180,18 @@ Should policy dictate the redaction of "endAutnum", this could be signaled in th
   "simpleRedaction_data" : [
     { "key": "////NO_END_NUMBERS////", "members": ["endAutnum"]}  
   ]
+  "remarks": [
+    {
+      "description": [
+        "No sane redaction policy would do this."
+      ]
+      “simpleRedaction_keys”: {
+        “keys”: [
+          “////NO_END_NUMBERS////”
+        ]
+      }
+    }
+  ]
 }  
 ```
 
@@ -265,7 +278,34 @@ A client MUST NOT consider any key not found to be a "simpleRedaction_keys" stru
 redaction (i.e. do not signal to the user that the information has been redacted). 
 
 The "links" array found in remarks and notices, as described by [@!RFC9083] may be used to link to a web page
-describing the redaction policy. The "about" relationship MUST be used for this purpose. The following is an example.
+describing the redaction policy. Clients may notify the user of the link, such as through hover-text or pop-ups.
+The "about" relationship MUST be used for this purpose. The following is an example.
+
+````
+"remarks": [
+  {
+    "description": [
+      "This information has been redacted according to the linked policy.",
+      "RFC 9537 does not support associating redacted data with policy links."
+    ]
+    “simpleRedaction_keys”: {
+      “keys”: [
+        “////REDACTED_HANDLE////”,
+        “////REDACTED_FULL_NAME////”,
+        “redacted_email@redacted.invalid”
+      ]
+    }
+    "links": [
+      {
+        "value": "https://example.com/value",
+        "rel": "about",
+        "href": "https://example.com/some-policy.html",
+        "type": "text/html"
+      }
+    ]
+  }
+]
+````
 
 This specification allows the use of "simpleRedaction_keys" in both RDAP remarks and notices. In RDAP, remarks
 are data pertaining to registered objects whereas notices are data pertaining to the response as a whole and
