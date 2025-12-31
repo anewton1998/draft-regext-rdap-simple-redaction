@@ -3,15 +3,14 @@ Title = "RDAP Simple Redaction"
 area = "Applications and Real-Time Area (ART)"
 workgroup = "Registration Protocols Extensions (regext)"
 abbrev = "simple-redaction"
-updates = [7480]
 ipr= "trust200902"
 
 [seriesInfo]
 name = "Internet-Draft"
-value = "draft-newton-regext-rdap-simple-redaction-00"
+value = "draft-newton-regext-rdap-simple-redaction-01"
 stream = "IETF"
 status = "standard"
-date = 2024-06-17T00:00:00Z
+date = 2026-01-05T00:00:00Z
 
 [[author]]
 initials="A."
@@ -32,22 +31,15 @@ This document defines a simple redaction extension for the Registration Data Acc
 
 # Background
 
-This document defines a simple redaction extension, "simple redaction", that is achieved through a narrow scope
-of features. Simple redaction only defines redaction in JSON strings of RDAP responses. This narrowed
-scope meets the purposes of known redaction policies, such as the 
-[ICANN Registration Data Policy](https://www.icann.org/resources/pages/registration-data-policy-2024-02-21-en),
-where redaction is applied against "personal data" which is only found in JSON strings in the
-RDAP specification ([@!RFC9083]). The only place in RDAP where booleans or integers are used in the
-base specification of [@!RFC9083] are in the DNSSEC portion of the domain object class, and there 
-is unlikely to be policy for redaction of such information as it also visible in the public DNS.
+This document defines a simple redaction extension for redacting information from Registration
+Data Access Protocol (RDAP) responses. This extension offers a much simpler approach to the
+redaction of information than RFC 9537. Additionally, it has several advantages of RFC 9537:
 
-This specification does not require the removal of JSON values or components that
-would otherwise make the resulting JSON invalid according to [@!RFC9083] nor semantically invalid according
-to [@!RFC9083] or [@!RFC7095].
-
-Finally, this specification has the benefit that if an RDAP client does not recognize this extension
-and simply passes the redaction signals onto the user, in some contexts the user may still understand that the
-information is redacted.
+* The reasons for a redaction may be specified in multiple languages.
+* All redactions may be processed by a client programmatically.
+* It re-uses remarks and notices from [@!RFC9083] and is backward-compatible with clients that do no support this extension.
+* In most cases, notifications of redacted data is passed to the user with clients that do not support this extensions.
+* Clients are not required to evaluate complicated and error-prone JSONPath expressions.
 
 The following is an example of an RDAP response using simple redaction:
 
@@ -60,17 +52,26 @@ The following is an example of an RDAP response using simple redaction:
     "vcard",
     [
       ["version", {}, "text", "4.0"],
-      ["fn", {}, "text", "////REDACTED_FN////"],
+      ["fn", {}, "text", "////REDACTED_FULL_NAME////"],
       ["email",
         { "type":"work" },
         "text", "redacted_email@redacted.invalid"
       ]
     ]
   ],
-  “simpleRedaction”: [
-    { “key”: “////REDACTED_HANDLE////” },
-    { “key”: “////REDACTED_FN////” },
-    { “key”: “redacted_email@redacted.invalid” }
+  "remarks": [
+    {
+      "description": [
+        "These values have been redacted according to policy."
+      ]
+      “simpleRedaction_keys”: {
+        “keys”: [
+          “////REDACTED_HANDLE////”,
+          “////REDACTED_FULL_NAME////”,
+          “redacted_email@redacted.invalid”
+        ]
+      }
+    }
   ]
 }
 
@@ -78,19 +79,24 @@ The following is an example of an RDAP response using simple redaction:
 
 # Redaction Keys {#redaction_keys}
 
-Simple redaction allows a server to define a set of keys, each used to signify when data in a string
-has been redacted. Clients use these keys to identify the information being redacted.
+Simple redaction allows a server to define a set of keys, each used to signify when data
+has been redacted. Clients use these keys to notify a user of redacted information.
 
-## Unstructured Text {#unstructured_keys}
+## Redaction of Data in Strings
+
+Data found in strings is the most common data type to be redacted. As of this writing,
+there are no known redaction policies that require the redaction of non-string data.
+
+### Unstructured Text {#unstructured_keys}
 
 Keys signifying redaction for unstructured text, i.e. free form text, take the form of `////REDACTION_KEY////`.
-These keys begin with four forward-slash character ("////"), followed by one or more of the upper and lower case characters 
-`A` through `Z`, `0` through `9`, hyphen ("-"), or underbar ("_"), followed by four more forward-slash characters. 
+These keys begin with four forward-slash characters ("////"), followed by one or more of the upper and lower case characters 
+`A` through `Z`, `0` through `9`, hyphen ("-"), or under-bar ("_"), followed by four more forward-slash characters. 
 
 The following example demonstrates redaction of the full name value from a jCard ([@?RFC7095]) array:
 
 ```
-["fn", {}, "text", "////REDACTED_FN////"]    
+["fn", {}, "text", "////REDACTED_FULL_NAME////"]    
 ```
 
 These keys may be placed in a string with other characters thus allowing for the partial redaction of a string:
@@ -99,82 +105,155 @@ These keys may be placed in a string with other characters thus allowing for the
 "Alice ////LAST_NAME_REDACTION////"
 ```
 
-## TEL URIs {#tel_uri_keys}
+### Telephone Numbers
 
-Keys for use in "tel" URIs ([@!RFC3966]) follow a form similar to (#unstructured_keys) but with a restricted
-set of characters to conform to the "tel" URI syntax. These keys begin and end with four forward-slash characters,
-but the set of characters allowed between the slashes is limited to `0` through `9`. For example:
-`////0123456789////`.
+Keys for telephone numbers may either be represented as text or "tel" URIs. Both jCard and JSContact allow
+telephone numbers to be represented in either format.
 
-The following is an example of a "tel" URI used in a jCard array:
+#### Telephone Numbers as Text
 
-```
-["tel", {}, "uri", "tel:+////0000000////;ext=////999999////"]    
-```
+Keys for telephone numbers represented as text use the same format as unstructured text (see (#unstructured_keys)).
 
-The above is just an example, but [@?RFC6530], which defines the much of the structures in [@?RFC7095], does
-not require the "tel" property to be a URI. So this maybe written as:
+The following is an example for jCard ([@!RFC7095]).
 
 ```
 ["tel", {}, "text", "////TELEPHONE_REDACTION////"]    
 ```
 
-## Email Addresses
+#### TEL URIs {#tel_uri_keys}
+
+Keys for use in "tel" URIs ([@!RFC3966]) use local numbers with the phone context of "redacted.example".
+These keys begin with four dash characters ("----"), followed by one or more HEXDIGITs as defined by [@!RFC3966],
+followed by four more dash characters. 
+
+The following is an example of a "tel" URI used in a jCard array:
+
+```
+["tel", {}, "uri", "tel:----0000000----;extension=----999999----;phone-context=redacted.invalid"]    
+```
+
+When possible, it is RECOMMENDED to use a text representation as keys for "tel" URIs are more complex.
+
+### Email Addresses
 
 Keys for email addresses MUST use a host part that is "redacted.invalid" but may use any local part
 allowable in an email address. For example: `redacted_email@redacted.invalid`.
 
-The ".invalid" TLD is a special-use domain defined in [@!RFC6761] and is unuseable on the Internet.
+The ".invalid" TLD is a special-use domain defined in [@!RFC6761] and is unusable on the Internet.
 
-## URIs with Host Names
+### URIs with Host Names
 
 Keys used in a URI with host names, such as an HTTP URI, MUST use a host name that is "redacted.invalid".
 For example: `https://redacted.invalid/redacted_web_page`.
 
-The ".invalid" TLD is a special-use domain defined in [@!RFC6761] and is unuseable on the Internet.
+The ".invalid" TLD is a special-use domain defined in [@!RFC6761] and is unusable on the Internet.
 
-# Explicit Keying {#explicity_keying}
+### Dates and Times
 
-All redaction keys ((#redaction_keys)) are explicitly specified by the server.
+Date and times in RDAP use [@!RFC3339]. Keys for these MUST use the year 0000.
+For example: `0000-00-00T23:20:50.52Z`.
 
-## The "simpleRedaction" Array {#simple_redaction_array}
+## Redaction of Other JSON Object Members
 
-Each defined key MUST be given in the "simpleRedaction" array value. This array contains JSON objects.
-Each JSON object has a REQUIRED JSON string named "key", a JSON array named "reasons", and an OPTIONAL
-"links" array as defined by [@!RFC9083] (see (#alternates) and (#policy) on usage).
-The "reasons" array is OPTIONAL but if present MUST NOT be empty.
+Signaling of the redaction of other JSON data type is a JSON object use the insertion of the "simpleRedaction_data" member
+into the object where the data has been redacted by removal. For example, consider an RDAP autnum object:
 
-The "reasons" array contains JSON objects. These objects SHOULD have a "lang" member as defined
-by [@!RFC9083] and MUST have a JSON array named "description". The "description" array contains
-only JSON strings.
+```
+{
+  "objecClassName": "autnum",
+  "handle": "AS-RANGE-FOO",
+  "startNum": 
+  "startAutnum" : 65536,
+  "endAutnum" : 65541
+}  
+```
+
+Should policy dictate the redaction of "endAutnum", this could be signaled in the following way:
+
+```
+{
+  "objecClassName": "autnum",
+  "handle": "AS-RANGE-FOO",
+  "startNum": 
+  "startAutnum" : 65536,
+  "simpleRedaction_data" : [
+    { "key": "////NO_END_NUMBERS////", "members": ["endAutnum"]}  
+  ]
+}  
+```
+
+The "simpleRedaction_data" member is an array of objects. Each object contains a "key" string signifying the
+redaction key and a "members" string array signifying the JSON members associated with the redaction key.
+
+# Specifying Keys {#specifying_keys}
+
+All redaction keys ((#redaction_keys)) are explicitly specified by the server, inside a structure called
+"simpleRedaction_keys" which is inserted in either an RDAP remark or notice. Keys MUST be specified
+at least once but MAY be specified more than once.
+
+Each "simpleRedaction_keys" object MUST have a member named "keys" which is an array of strings
+containing the redaction keys (#redaction_keys).
+
+The following is an example:
+
+````
+"remarks": [
+  {
+    "description": [
+      "These values have been redacted according to policy."
+    ]
+    “simpleRedaction_keys”: {
+      “keys”: [
+        “////REDACTED_HANDLE////”,
+        “////REDACTED_FULL_NAME////”,
+        “redacted_email@redacted.invalid”
+      ]
+    }
+  }
+]
+````
+
+A redaction key MAY appear in more than one remark or notice to allow a server to describe
+the cause of the redaction in more than one language.
 
 The following is an example:
 
 ```
-“simpleRedaction”: [
+"remarks": [
   {
-    “key”: “////REDACTED_FULL_NAME////”,
-    “reasons” : [
-      {
-        “lang”: “en”,
-        “description” : [
-          “The full name of registrants has not been given.”,
-          “This redaction is done according to policy.”
-        ]
-      },
-      {
-        “lang”: “ja”,
-        “description” : [
-          “登録者のフルネームは公表されていない。”,
-          “この編集はポリシーに従って行われます。”
-        ]
-      }
-    ],
+    “lang”: “ja”,
+    "description": [
+      "RFC 9537 では、編集の理由を複数の言語で記述することはサポートされていません。"
+    ]
+    “simpleRedaction_keys”: {
+      “keys”: [
+        “////REDACTED_FULL_NAME////”
+      ]
+    }
     "links": [
       {
         "value": "https://example.com/value",
         "rel": "about",
-        "href": "https://example.com/some-policy.html",
+        "href": "https://example.com/ja/some-policy.html",
+        "type": "text/html"
+      }
+    ]
+  },
+  {
+    “lang”: “en”,
+    "description": [
+      "Describing the reason for a redaction in multple languages is not supported by RFC 9537."
+    ]
+    “simpleRedaction_keys”: {
+      “keys”: [
+        “////REDACTED_FULL_NAME////”
+      ]
+    }
+    "links": [
+      {
+        "value": "https://example.com/value",
+        "rel": "about",
+        "href": "https://example.com/en/some-policy.html",
         "type": "text/html"
       }
     ]
@@ -182,127 +261,17 @@ The following is an example:
 ]
 ```
 
-A key MAY be used more than once in an RDAP object, but it MUST only appear once in the "simpleRedaction" array
-of objects. A client MUST NOT consider any key not found to be the "simpleRedaction" array of objects as a valid
+A client MUST NOT consider any key not found to be a "simpleRedaction_keys" structure as a valid
 redaction (i.e. do not signal to the user that the information has been redacted). 
 
-The "simpleRedaction" JSON value MUST only be in the top-most object of the RDAP response.
+The "links" array found in remarks and notices, as described by [@!RFC9083] may be used to link to a web page
+describing the redaction policy. The "about" relationship MUST be used for this purpose. The following is an example.
 
-## Alternates {#alternates}
-
-The "simpleRedaction" array described in (#simple_redaction_array) allows each key to be accompanied by
-an array of links, as defined by [#RFC9083]. Usage of the links may be used to signal an alternate
-usage in cases where the alternate can be expressed as a URI. To do this, servers MUST use the "alternate"
-link relation and clients SHOULD signal to users that the "href" value is available for alternate usage.
-
-The following example demonstrates the singaling on a web-based contact form to be used instead of email.
-
-```
-{
-  "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
-  "objectClassName" : "entity",
-  "handle":"foo",
-  "vcardArray":[
-    "vcard",
-    [
-      ["version", {}, "text", "4.0"],
-      ["fn", {}, "text", "Bob Allison"],
-      ["email",
-        { "type":"work" },
-        "text", "redacted_email@redacted.invalid"
-      ]
-    ]
-  ],
-  “simpleRedaction”: [
-    { 
-      “key”: “redacted_email@redacted.invalid”,
-      "links": [
-        {
-          "value": "https://example.com/value",
-          "rel": "alternate",
-          "href": "https://example.com/contact-form",
-          "type": "text/html"
-        }
-      ]
-    }
-  ]
-}
-```
-
-This example demonstrates singaling that an alternate email address is to be used.
-
-```
-{
-  "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
-  "objectClassName" : "entity",
-  "handle":"foo",
-  "vcardArray":[
-    "vcard",
-    [
-      ["version", {}, "text", "4.0"],
-      ["fn", {}, "text", "Bob Allison"],
-      ["email",
-        { "type":"work" },
-        "text", "redacted_email@redacted.invalid"
-      ]
-    ]
-  ],
-  “simpleRedaction”: [
-    { 
-      “key”: “redacted_email@redacted.invalid”,
-      "links": [
-        {
-          "value": "https://example.com/value",
-          "rel": "alternate",
-          "href": "mailto:proxy-service@example.com"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Clients should consider, when presenting information to a user,
-that an alternate use may differ from the form in the RDAP response. For example,
-the RDAP response may contain an email address but the alternate usage is a web page.
-
-## Redaction Policy {#policy}
-
-The "links" array described in (#simple_redaction_array) may also be used to link to a web page
-describing the redaction policy. When the array is to be used for this purpose, the "about" relationship
-MUST be used. The following is an example.
-
-```
-{
-  "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
-  "objectClassName" : "entity",
-  "handle":"foo",
-  "vcardArray":[
-    "vcard",
-    [
-      ["version", {}, "text", "4.0"],
-      ["fn", {}, "text", "Bob Allison"],
-      ["email",
-        { "type":"work" },
-        "text", "redacted_email@redacted.invalid"
-      ]
-    ]
-  ],
-  “simpleRedaction”: [
-    { 
-      “key”: “redacted_email@redacted.invalid”,
-      "links": [
-        {
-          "value": "https://example.com/value",
-          "rel": "about",
-          "href": "https://example.com/some-policy.html",
-          "type": "text/html"
-        }
-      ]
-    }
-  ]
-}
-```
+This specification allows the use of "simpleRedaction_keys" in both RDAP remarks and notices. In RDAP, remarks
+are data pertaining to registered objects whereas notices are data pertaining to the response as a whole and
+the service being provided. Therefore, specifying redaction of data pertaining to registered objects should
+use RDAP remarks. And, unlikely as it would be, redaction of data pertaining service information should use
+RDAP notices.
 
 ## Keying Strategies
 
@@ -312,16 +281,16 @@ While it seems odd that some users would be allowed to give an email address wit
 "redacted.invalid" or a string that begins and ends with four forward-slashes to an Internet
 registration authority, some registries must deal with such data for various reasons.
 
-One strategy servers may use would be to append a set of random digits to each key. For example,
-if a registered resource was given as "////I_FOOLED_YOU////" then the server could thwart this
-by appending the random digits "90210" to make the key "////I_FOOLED_YOU90210////".
+One strategy servers may use would be to append a set of random characters to each key. For example,
+if a registered resource was given as "////I-fooled-you////" then the server could thwart this
+by appending the random characters "1234-NO-YOU-DID-NOT" to make the key "////I-fooled-you_1234-NO-YOU-DID-NOT////".
 
 ### Handles
 
 For servers operating under policies in which the "handle", as defined by [@!RFC9083] must be
 redacted, it would be beneficial to some clients to create unique redaction keys for each handle.
 While clients SHOULD use "self" links, as described in [@!RFC9083], to differentiate between
-between objects returned in a response, in the absence of "self" links they often use the "handle".
+objects returned in a response, in the absence of "self" links they often use the "handle".
 Therefore, servers SHOULD create a unique redaction key for each handle that is redacted.
 
 # Examples
@@ -355,12 +324,21 @@ unstructured.
       ],
     ]
   ],
-  “simpleRedaction”: [
-    { “key”: “////REDACTED_STREET////” },
-    { “key”: “////REDACTED_POSTAL_CODE////” },
+  "remarks": [
+    {
+      "description": [
+        "These values have been redacted according to policy."
+      ]
+      “simpleRedaction_keys”: {
+        “keys”: [
+          “////REDACTED_STREET////”,
+          “////REDACTED_POSTAL_CODE////”
+        ]
+      }
+    }
   ]
 }
-````
+```
 
 ## Structured Addresses
 
@@ -393,12 +371,21 @@ structured.
       ]
     ]
   ],
-  “simpleRedaction”: [
-    { “key”: “////REDACTED_STREET////” },
-    { “key”: “////REDACTED_POSTAL_CODE////” },
+  "remarks": [
+    {
+      "description": [
+        "These values have been redacted according to policy."
+      ]
+      “simpleRedaction_keys”: {
+        “keys”: [
+          “////REDACTED_STREET////”,
+          “////REDACTED_POSTAL_CODE////”
+        ]
+      }
+    }
   ]
 }
-````
+```
 
 ## A Complete Example
 
@@ -602,16 +589,16 @@ have been applied.
             {
               "type": "voice"
             },
-            "uri",
-            "tel:+////0000000000////;ext=////1111111111////"
+            "text",
+            "////0000000000////;ext=////1111111111////"
           ],
           [
             "tel",
             {
               "type": "fax"
             },
-            "uri",
-            "tel:+////2222222222////"
+            "text",
+            "////2222222222////"
           ]
         ]
       ]
@@ -668,8 +655,8 @@ have been applied.
             {
               "type": "voice"
             },
-            "uri",
-            "tel:+////3333333333////;ext=321"
+            "text",
+            "////3333333333////;ext=321"
           ],
           [
             "tel",
@@ -703,22 +690,31 @@ have been applied.
     "server transfer prohibited",
     "client transfer prohibited"
   ],
-  “simpleRedaction”: [
-    { “key”: “////REGISTRY_DOMAIN_ID_REDACTION////” },
-    { “key”: “////REGISTRY_REGISTRANT_ID_REDACTION////” },
-    { “key”: “////REGISTRANT_NAME_REDACTION////” },
-    { “key”: “////REGISTRANT_STREET_REDACTION////” },
-    { “key”: “////REGISTRANT_POSTAL_CODE_REDACTION////” },
-    { “key”: “////0000000000////” },
-    { “key”: “////1111111111////” },
-    { “key”: “////REGISTRY_TECH_ID_REDACTION////” },
-    { “key”: “////TECH_NAME_REDACTION////” },
-    { “key”: “////1111111111////” },
-    { “key”: “////2222222222////” },
-    { “key”: “registrant-email-redaction@redacted.invalid” },
-    { “key”: “tech-email-redaction@redacted.invalid” },
-    { “key”: “////REGISTRANT_ORG_REDACTION////” },
-    { “key”: “////REGISTRANT_CITY_REDACTION////” }
+  "remarks": [
+    {
+      "description": [
+        "These values have been redacted according to policy."
+      ]
+      “simpleRedaction_keys”: {
+        “keys”: [
+          “////REGISTRY_DOMAIN_ID_REDACTION////”,
+          “////REGISTRY_REGISTRANT_ID_REDACTION////”,
+          “////REGISTRANT_NAME_REDACTION////”,
+          “////REGISTRANT_STREET_REDACTION////”,
+          “////REGISTRANT_POSTAL_CODE_REDACTION////”,
+          “////0000000000////”,
+          “////1111111111////”,
+          “////REGISTRY_TECH_ID_REDACTION////”,
+          “////TECH_NAME_REDACTION////”,
+          “////1111111111////”,
+          “////2222222222////”,
+          “registrant-email-redaction@redacted.invalid”,
+          “tech-email-redaction@redacted.invalid”,
+          “////REGISTRANT_ORG_REDACTION////”,
+          “////REGISTRANT_CITY_REDACTION////”
+        ]
+      }
+    }
   ]
 }  
 ```
