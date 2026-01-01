@@ -37,6 +37,7 @@ redaction of information than RFC 9537. Additionally, it has several advantages 
 
 * The reasons for a redaction may be specified in multiple languages.
 * All redactions may be processed by a client programmatically.
+* String data may be partially redacted.
 * It re-uses remarks and notices from [@!RFC9083] and is backward-compatible with clients that do no support this extension.
 * Re-use of remarks and notices enables linking of redacted data to redaction policies.
 * In most cases, notifications of redacted data is passed to the user with clients that do not support this extensions.
