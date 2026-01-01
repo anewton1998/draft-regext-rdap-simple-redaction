@@ -33,15 +33,16 @@ This document defines a simple redaction extension for the Registration Data Acc
 
 This document defines a simple redaction extension for redacting information from Registration
 Data Access Protocol (RDAP) responses. This extension offers a much simpler approach to the
-redaction of information than RFC 9537. Additionally, it has several advantages of RFC 9537:
+redaction of information than RFC 9537. Additionally, it has several advantages over RFC 9537:
 
 * The reasons for a redaction may be specified in multiple languages.
 * All redactions may be processed by a client programmatically.
 * String data may be partially redacted.
 * It re-uses remarks and notices from [@!RFC9083] and is backward-compatible with clients that do no support this extension.
 * Re-use of remarks and notices enables linking of redacted data to redaction policies.
-* In most cases, notifications of redacted data is passed to the user with clients that do not support this extensions.
+* In most cases, notifications of redacted data is passed to the user with clients that do not support this extension.
 * Clients are not required to evaluate complicated and error-prone JSONPath expressions.
+* Usage in RDAP object containers, such as RDAP search results or bulk Whois-like documents, does not require rewriting of JSONPath expressions.
 
 The following is an example of an RDAP response using simple redaction:
 
@@ -65,7 +66,7 @@ The following is an example of an RDAP response using simple redaction:
     {
       "description": [
         "These values have been redacted according to policy."
-      ]
+      ],
       “simpleRedaction_keys”: {
         “keys”: [
           “////REDACTED_HANDLE////”,
@@ -185,7 +186,7 @@ Should policy dictate the redaction of "endAutnum", this could be signaled in th
     {
       "description": [
         "No sane redaction policy would do this."
-      ]
+      ],
       “simpleRedaction_keys”: {
         “keys”: [
           “////NO_END_NUMBERS////”
@@ -215,7 +216,7 @@ The following is an example:
   {
     "description": [
       "These values have been redacted according to policy."
-    ]
+    ],
     “simpleRedaction_keys”: {
       “keys”: [
         “////REDACTED_HANDLE////”,
@@ -238,12 +239,12 @@ The following is an example:
     “lang”: “ja”,
     "description": [
       "RFC 9537 では、編集の理由を複数の言語で記述することはサポートされていません。"
-    ]
+    ],
     “simpleRedaction_keys”: {
       “keys”: [
         “////REDACTED_FULL_NAME////”
       ]
-    }
+    },
     "links": [
       {
         "value": "https://example.com/value",
@@ -257,12 +258,12 @@ The following is an example:
     “lang”: “en”,
     "description": [
       "Describing the reason for a redaction in multple languages is not supported by RFC 9537."
-    ]
+    ],
     “simpleRedaction_keys”: {
       “keys”: [
         “////REDACTED_FULL_NAME////”
       ]
-    }
+    },
     "links": [
       {
         "value": "https://example.com/value",
@@ -288,14 +289,14 @@ The "about" relationship MUST be used for this purpose. The following is an exam
     "description": [
       "This information has been redacted according to the linked policy.",
       "RFC 9537 does not support associating redacted data with policy links."
-    ]
+    ],
     “simpleRedaction_keys”: {
       “keys”: [
         “////REDACTED_HANDLE////”,
         “////REDACTED_FULL_NAME////”,
         “redacted_email@redacted.invalid”
       ]
-    }
+    },
     "links": [
       {
         "value": "https://example.com/value",
@@ -369,7 +370,7 @@ unstructured.
     {
       "description": [
         "These values have been redacted according to policy."
-      ]
+      ],
       “simpleRedaction_keys”: {
         “keys”: [
           “////REDACTED_STREET////”,
@@ -416,7 +417,7 @@ structured.
     {
       "description": [
         "These values have been redacted according to policy."
-      ]
+      ],
       “simpleRedaction_keys”: {
         “keys”: [
           “////REDACTED_STREET////”,
@@ -735,7 +736,7 @@ have been applied.
     {
       "description": [
         "These values have been redacted according to policy."
-      ]
+      ],
       “simpleRedaction_keys”: {
         “keys”: [
           “////REGISTRY_DOMAIN_ID_REDACTION////”,
