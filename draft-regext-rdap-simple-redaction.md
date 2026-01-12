@@ -10,7 +10,7 @@ name = "Internet-Draft"
 value = "draft-newton-regext-rdap-simple-redaction-01"
 stream = "IETF"
 status = "standard"
-date = 2026-01-05T00:00:00Z
+date = 2026-01-12T00:00:00Z
 
 [[author]]
 initials="A."
@@ -79,6 +79,12 @@ The following is an example of an RDAP response using simple redaction:
 }
 
 ```
+
+The methods for noting redactions in this extension cannot redact numbers or booleans in
+JSON arrays. However, there are no known RDAP data structures either in [@!RFC9083] or any
+RDAP extension that use arrays containing numbers or booleans.
+
+Additionally, there are no known redaction policies that require anything more than redaction of string data.
 
 # Redaction Keys {#redaction_keys}
 
@@ -238,7 +244,7 @@ The following is an example:
   {
     “lang”: “ja”,
     "description": [
-      "RFC 9537 では、編集の理由を複数の言語で記述することはサポートされていません。"
+      "この拡張機能は、複数の言語での編集理由をサポートします。"
     ],
     “simpleRedaction_keys”: {
       “keys”: [
@@ -257,7 +263,7 @@ The following is an example:
   {
     “lang”: “en”,
     "description": [
-      "Describing the reason for a redaction in multple languages is not supported by RFC 9537."
+      "This extension supports redaction reasons in multiple languages."
     ],
     “simpleRedaction_keys”: {
       “keys”: [
@@ -288,7 +294,7 @@ The "about" relationship MUST be used for this purpose. The following is an exam
   {
     "description": [
       "This information has been redacted according to the linked policy.",
-      "RFC 9537 does not support associating redacted data with policy links."
+      "This extension supports associating redacted data links to redaction policies."
     ],
     “simpleRedaction_keys”: {
       “keys”: [
