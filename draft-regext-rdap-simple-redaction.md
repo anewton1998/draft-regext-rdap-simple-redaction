@@ -50,12 +50,12 @@ The following is an example of an RDAP response using simple redaction:
 {
   "rdapConformance" : [ "Rdap_level_0", “simpleRedaction” ],
   "objectClassName" : "entity",
-  "handle":"////REDACTED_HANDLE////",
+  "handle":"----REDACTED_HANDLE----",
   "vcardArray":[
     "vcard",
     [
       ["version", {}, "text", "4.0"],
-      ["fn", {}, "text", "////REDACTED_FULL_NAME////"],
+      ["fn", {}, "text", "----REDACTED_FULL_NAME----"],
       ["email",
         { "type":"work" },
         "text", "redacted_email@redacted.invalid"
@@ -69,8 +69,8 @@ The following is an example of an RDAP response using simple redaction:
       ],
       “simpleRedaction_keys”: {
         “keys”: [
-          “////REDACTED_HANDLE////”,
-          “////REDACTED_FULL_NAME////”,
+          “----REDACTED_HANDLE----”,
+          “----REDACTED_FULL_NAME----”,
           “redacted_email@redacted.invalid”
         ]
       }
@@ -99,19 +99,19 @@ there are no known redaction policies that require the redaction of non-string d
 ### Unstructured Text {#unstructured_keys}
 
 Keys signifying redaction for unstructured text, i.e. free form text, take the form of `////REDACTION_KEY////`.
-These keys begin with four forward-slash characters ("////"), followed by one or more of the upper and lower case characters 
-`A` through `Z`, `0` through `9`, hyphen ("-"), or under-bar ("_"), followed by four more forward-slash characters. 
+These keys begin with four dash characters ("----"), followed by one or more of the upper and lower case characters 
+`A` through `Z`, `0` through `9`, or under-bar ("_"), followed by four more dash characters. 
 
 The following example demonstrates redaction of the full name value from a jCard ([@?RFC7095]) array:
 
 ```
-["fn", {}, "text", "////REDACTED_FULL_NAME////"]    
+["fn", {}, "text", "----REDACTED_FULL_NAME----"]    
 ```
 
 These keys may be placed in a string with other characters thus allowing for the partial redaction of a string:
 
 ```
-"Alice ////LAST_NAME_REDACTION////"
+"Alice ----LAST_NAME_REDACTION----"
 ```
 
 ### Telephone Numbers
@@ -126,7 +126,7 @@ Keys for telephone numbers represented as text use the same format as unstructur
 The following is an example for jCard ([@!RFC7095]).
 
 ```
-["tel", {}, "text", "////TELEPHONE_REDACTION////"]    
+["tel", {}, "text", "----TELEPHONE_REDACTION----"]    
 ```
 
 #### TEL URIs {#tel_uri_keys}
@@ -186,7 +186,7 @@ Should policy dictate the redaction of "endAutnum", this could be signaled in th
   "startNum": 
   "startAutnum" : 65536,
   "simpleRedaction_data" : [
-    { "key": "////NO_END_NUMBERS////", "members": ["endAutnum"]}  
+    { "key": "----NO_END_NUMBERS----", "members": ["endAutnum"]}  
   ]
   "remarks": [
     {
@@ -195,7 +195,7 @@ Should policy dictate the redaction of "endAutnum", this could be signaled in th
       ],
       “simpleRedaction_keys”: {
         “keys”: [
-          “////NO_END_NUMBERS////”
+          “----NO_END_NUMBERS----”
         ]
       }
     }
@@ -225,8 +225,8 @@ The following is an example:
     ],
     “simpleRedaction_keys”: {
       “keys”: [
-        “////REDACTED_HANDLE////”,
-        “////REDACTED_FULL_NAME////”,
+        “----REDACTED_HANDLE----”,
+        “----REDACTED_FULL_NAME----”,
         “redacted_email@redacted.invalid”
       ]
     }
@@ -248,7 +248,7 @@ The following is an example:
     ],
     “simpleRedaction_keys”: {
       “keys”: [
-        “////REDACTED_FULL_NAME////”
+        “----REDACTED_FULL_NAME----”
       ]
     },
     "links": [
@@ -267,7 +267,7 @@ The following is an example:
     ],
     “simpleRedaction_keys”: {
       “keys”: [
-        “////REDACTED_FULL_NAME////”
+        “----REDACTED_FULL_NAME----”
       ]
     },
     "links": [
@@ -298,8 +298,8 @@ The "about" relationship MUST be used for this purpose. The following is an exam
     ],
     “simpleRedaction_keys”: {
       “keys”: [
-        “////REDACTED_HANDLE////”,
-        “////REDACTED_FULL_NAME////”,
+        “----REDACTED_HANDLE----”,
+        “----REDACTED_FULL_NAME----”,
         “redacted_email@redacted.invalid”
       ]
     },
@@ -363,7 +363,7 @@ unstructured.
         {
 
           "type":"home",
-          "label":"////REDACTED_STREET////\nVancouver\nBC\n////REDACTED_POSTAL_CODE////\n"
+          "label":"----REDACTED_STREET----\nVancouver\nBC\n----REDACTED_POSTAL_CODE----\n"
         },
         "text",
         [
@@ -377,10 +377,10 @@ unstructured.
       "description": [
         "These values have been redacted according to policy."
       ],
-      “simpleRedaction_keys”: {
-        “keys”: [
-          “////REDACTED_STREET////”,
-          “////REDACTED_POSTAL_CODE////”
+      "simpleRedaction_keys": {
+        "keys": [
+          "----REDACTED_STREET----",
+          "----REDACTED_POSTAL_CODE----"
         ]
       }
     }
@@ -409,11 +409,11 @@ structured.
         "text",
         [
           "",
-          "////REDACTED_STREET////",
-          "////REDACTED_STREET////",
+          "----REDACTED_STREET----",
+          "----REDACTED_STREET----",
           "Quebec",
           "QC",
-          "////REDACTED_POSTAL_CODE////",
+          "----REDACTED_POSTAL_CODE----",
           "Canada"
         ]
       ]
@@ -424,10 +424,10 @@ structured.
       "description": [
         "These values have been redacted according to policy."
       ],
-      “simpleRedaction_keys”: {
-        “keys”: [
-          “////REDACTED_STREET////”,
-          “////REDACTED_POSTAL_CODE////”
+      "simpleRedaction_keys": {
+        "keys": [
+          "----REDACTED_STREET----",
+          "----REDACTED_POSTAL_CODE----"
         ]
       }
     }
@@ -448,7 +448,7 @@ have been applied.
     "rdap_level_0", "simpleRedaction"
   ],
   "objectClassName": "domain",
-  "handle": "////REGISTRY_DOMAIN_ID_REDACTION////",
+  "handle": "----REGISTRY_DOMAIN_ID_REDACTION----",
   "ldhName": "example.com",
   "secureDNS": {
     "delegationSigned": false
@@ -604,13 +604,13 @@ have been applied.
             "fn",
             {},
             "text",
-            "////REGISTRANT_NAME_REDACTION////"
+            "----REGISTRANT_NAME_REDACTION----"
           ],
           [
             "org",
             {},
             "text",
-            "////REGISTRANT_ORG_REDACTION////"
+            "----REGISTRANT_ORG_REDACTION----"
           ],
           [
             "adr",
@@ -618,11 +618,11 @@ have been applied.
             "text",
             [
               "",
-              "////REGISTRANT_STREET_REDACTION////",
-              "////REGISTRANT_STREET_REDACTION////",
+              "----REGISTRANT_STREET_REDACTION----",
+              "----REGISTRANT_STREET_REDACTION----",
               "Quebec",
-              "////REGISTRANT_CITY_REDACTION////",
-              "////REGISTRANT_POSTAL_CODE_REDACTION////",
+              "----REGISTRANT_CITY_REDACTION----",
+              "----REGISTRANT_POSTAL_CODE_REDACTION----",
               "Canada"
             ]
           ],
@@ -638,7 +638,7 @@ have been applied.
               "type": "voice"
             },
             "text",
-            "////0000000000////;ext=////1111111111////"
+            "----0000000000----;ext=----1111111111----"
           ],
           [
             "tel",
@@ -646,14 +646,14 @@ have been applied.
               "type": "fax"
             },
             "text",
-            "////2222222222////"
+            "----2222222222----"
           ]
         ]
       ]
     },
     {
       "objectClassName": "entity",
-      "handle": "////REGISTRY_TECH_ID_REDACTION////",
+      "handle": "----REGISTRY_TECH_ID_REDACTION----",
       "roles": [
         "technical"
       ],
@@ -670,7 +670,7 @@ have been applied.
             "fn",
             {},
             "text",
-            "////TECH_NAME_REDACTION////"
+            "----TECH_NAME_REDACTION----"
           ],
           [
             "org",
@@ -704,7 +704,7 @@ have been applied.
               "type": "voice"
             },
             "text",
-            "////3333333333////;ext=321"
+            "----3333333333----;ext=321"
           ],
           [
             "tel",
@@ -743,23 +743,23 @@ have been applied.
       "description": [
         "These values have been redacted according to policy."
       ],
-      “simpleRedaction_keys”: {
-        “keys”: [
-          “////REGISTRY_DOMAIN_ID_REDACTION////”,
-          “////REGISTRY_REGISTRANT_ID_REDACTION////”,
-          “////REGISTRANT_NAME_REDACTION////”,
-          “////REGISTRANT_STREET_REDACTION////”,
-          “////REGISTRANT_POSTAL_CODE_REDACTION////”,
-          “////0000000000////”,
-          “////1111111111////”,
-          “////REGISTRY_TECH_ID_REDACTION////”,
-          “////TECH_NAME_REDACTION////”,
-          “////1111111111////”,
-          “////2222222222////”,
-          “registrant-email-redaction@redacted.invalid”,
-          “tech-email-redaction@redacted.invalid”,
-          “////REGISTRANT_ORG_REDACTION////”,
-          “////REGISTRANT_CITY_REDACTION////”
+      "simpleRedaction_keys": {
+        "keys": [
+          "----REGISTRY_DOMAIN_ID_REDACTION----",
+          "----REGISTRY_REGISTRANT_ID_REDACTION----",
+          "----REGISTRANT_NAME_REDACTION----",
+          "----REGISTRANT_STREET_REDACTION----",
+          "----REGISTRANT_POSTAL_CODE_REDACTION----",
+          "----0000000000----",
+          "----1111111111----",
+          "----REGISTRY_TECH_ID_REDACTION----",
+          "----TECH_NAME_REDACTION----",
+          "----1111111111----",
+          "----2222222222----",
+          "registrant-email-redaction@redacted.invalid",
+          "tech-email-redaction@redacted.invalid",
+          "----REGISTRANT_ORG_REDACTION----",
+          "----REGISTRANT_CITY_REDACTION----"
         ]
       }
     }
